@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1236">
+<title>Carga la Batería · Tablas de multiplicar · CEIP Miguel Servet</title>
+<style>
+:root{
+  --bg1:#0b1236;--bg2:#143a7a;--ink:#f4f8ff;--mute:#a9bbe8;--cy:#27e1ff;--ye:#ffd93d;--ok:#2bff88;--ko:#ff6b7d;
+  --card:#10204f;--line:#3b5bb5;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow-x:hidden;background:#0b1236;color:var(--ink);
+  font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,Verdana,sans-serif;-webkit-text-size-adjust:100%}
+body{background:radial-gradient(circle at 20% 0%,#1d4fa8 0,transparent 55%),linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed}
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.screen{display:none;flex:1;min-height:0;flex-direction:column}
+.screen.active{display:flex}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:4px solid var(--ye);outline-offset:3px}
+.btn{min-height:48px;min-width:48px;border:0;border-radius:16px;padding:12px 22px;font-size:1.15rem;font-weight:800;
+  color:#06122e;background:linear-gradient(#35e8ff,#1aa5e6);box-shadow:0 5px 0 #0b5d8f,0 0 18px #27e1ff55}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #0b5d8f}
+.btn.sec{background:linear-gradient(#41508f,#2a3670);color:#fff;box-shadow:0 5px 0 #141c47}
+.btn.ye{background:linear-gradient(#ffe56b,#ffc21a);box-shadow:0 5px 0 #9c7400}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- MENÚ ---------- */
+#menu{align-items:center;justify-content:center;text-align:center;padding:16px;overflow-y:auto}
+.school{font-size:.95rem;color:var(--mute);letter-spacing:.06em;font-weight:700}
+h1{margin:.2em 0 .1em;font-size:clamp(2rem,7vw,3.6rem);line-height:1.05;text-shadow:0 0 22px #27e1ff88}
+h1 span{color:var(--ye)}
+.sub{font-size:clamp(1rem,2.6vw,1.35rem);color:var(--cy);font-weight:700;margin:.2em 0 .6em}
+.credit{font-size:.85rem;color:var(--mute);margin:.4em 0}
+h2.q{margin:.8em 0 .5em;font-size:clamp(1.2rem,3.6vw,1.8rem)}
+#tablePick{display:grid;grid-template-columns:repeat(4,minmax(64px,110px));gap:14px;justify-content:center;margin:.2em 0 1em}
+@media(max-width:420px){#tablePick{grid-template-columns:repeat(4,minmax(58px,1fr));gap:10px;width:100%}}
+.tbtn{position:relative;aspect-ratio:1/1;min-height:64px;border:3px solid var(--cy);border-radius:20px;background:linear-gradient(160deg,#193574,#0f2257);
+  color:#fff;font-size:clamp(1.8rem,7vw,2.8rem);font-weight:900;box-shadow:0 6px 0 #081a46,0 0 16px #27e1ff44;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tbtn:hover{border-color:var(--ye)}
+.tbtn:active{transform:translateY(4px);box-shadow:0 2px 0 #081a46}
+.tbtn small{font-size:.28em;font-weight:700;color:var(--mute);margin-top:2px}
+.tbtn .mbar{width:70%;height:6px;border-radius:4px;background:#2a3a78;margin-top:5px;overflow:hidden}
+.tbtn .mbar i{display:block;height:100%;background:var(--ok)}
+.menurow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:.4em}
+.menurow .btn{font-size:.95rem;padding:10px 16px}
+
+/* ---------- JUEGO ---------- */
+#hud{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;flex-wrap:wrap}
+.pill{background:#ffffff1c;border:1px solid #ffffff33;border-radius:999px;padding:6px 12px;font-weight:800;font-size:1rem;white-space:nowrap}
+#hud .btn{min-height:44px;padding:6px 14px;font-size:.95rem}
+#arena{flex:1;min-height:0;position:relative}
+#cards{pointer-events:none}
+.card{position:absolute;display:flex;align-items:center;justify-content:center;gap:.25em;border-radius:14px;
+  background:linear-gradient(160deg,#16306e,#0e1d49);border:3px solid var(--c,#27e1ff);color:#fff;font-weight:900;
+  box-shadow:0 4px 0 #050d2a,0 0 14px color-mix(in srgb,var(--c) 45%,transparent);font-size:var(--cf,20px);white-space:nowrap;
+  transition:box-shadow .3s}
+.card b{color:var(--c)}
+.card.glow{animation:glow .7s ease-in-out infinite alternate;z-index:5;border-color:#fff;background:linear-gradient(160deg,#6b5200,#3c2d00)}
+@keyframes glow{from{box-shadow:0 0 0 0 #ffd93d,0 0 16px #ffd93d}to{box-shadow:0 0 0 8px #ffd93d55,0 0 34px #ffd93d}}
+#game.wide #cards{position:absolute;inset:0}
+#game.wide #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,40%)}
+#game.tall #arena{display:flex;flex-direction:column;overflow-y:auto}
+#game.tall #cards{position:relative;flex:0 0 40%;min-height:150px}
+#game.tall #center{flex:1;min-height:240px;padding:0 14px 14px}
+#center{text-align:center}
+#battery{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:.4em}
+#bat{position:relative;display:flex;gap:3px;padding:5px;border:3px solid var(--cy);border-radius:10px;background:#071433;flex:1;max-width:340px}
+#bat::after{content:"";position:absolute;right:-12px;top:30%;width:8px;height:40%;background:var(--cy);border-radius:0 4px 4px 0}
+#bat i{flex:1;height:22px;border-radius:4px;background:#17265c}
+#bat i.on{background:linear-gradient(#ffe56b,#ffb300);box-shadow:0 0 10px #ffd93d}
+#batLbl{font-weight:800;min-width:3.4em;text-align:left}
+#op{font-size:clamp(2.6rem,min(11vw,12vh),6rem);font-weight:900;letter-spacing:.02em;line-height:1.05;margin:.1em 0;text-shadow:0 0 24px #27e1ff88}
+#op em{font-style:normal;color:var(--ye)}
+#ansRow{display:flex;gap:10px;justify-content:center;align-items:stretch}
+#ans{width:min(46%,180px);min-width:110px;font:inherit;font-size:clamp(1.8rem,7vh,2.8rem);font-weight:900;text-align:center;border-radius:16px;
+  border:4px solid var(--cy);background:#071433;color:#fff;padding:6px;min-height:56px}
+#ans:focus{outline:none;border-color:var(--ye);box-shadow:0 0 0 4px #ffd93d55}
+#ans.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#ansRow .btn{min-height:56px;font-size:1.1rem}
+#fb{min-height:2.6em;margin-top:.5em;font-size:clamp(1rem,2.8vw,1.25rem);font-weight:800;line-height:1.3}
+#fb.ok{color:var(--ok)}#fb.ko{color:var(--ko)}#fb.tip{color:var(--ye)}
+#toast{position:fixed;left:50%;top:18%;transform:translateX(-50%);pointer-events:none;font-size:2rem;font-weight:900;opacity:0}
+#toast.on{animation:pop 1s ease-out}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}20%{opacity:1;transform:translate(-50%,0) scale(1.1)}100%{opacity:0;transform:translate(-50%,-30px) scale(1)}}
+
+/* ---------- FINAL / CRÉDITOS ---------- */
+#end,#credits{align-items:center;justify-content:flex-start;text-align:center;padding:14px;overflow-y:auto}
+.box{background:#0d1b4acc;border:2px solid var(--line);border-radius:22px;padding:16px;max-width:640px;width:100%;margin:6px auto}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:.6em 0}
+.stats div{background:#ffffff14;border-radius:14px;padding:8px 4px}
+.stats b{display:block;font-size:1.5rem;color:var(--ye)}
+.stats span{font-size:.8rem;color:var(--mute)}
+.list{text-align:left;margin:.5em 0}
+.list h3{margin:.3em 0;font-size:1.1rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:#ffffff1a;border-radius:10px;padding:5px 10px;font-weight:800}
+.chip.g{border:2px solid var(--ok)}.chip.r{border:2px solid var(--ye)}.chip.b{border:2px solid var(--cy)}
+#endBat{justify-content:center;margin:.4em 0}
+/* modal */
+#modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+#modal.on{display:flex}
+#modal .box{max-width:420px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- PANTALLA INICIAL -->
+  <section id="menu" class="screen active" aria-labelledby="ttl">
+    <div class="school">CEIP Miguel Servet · Balerma</div>
+    <h1 id="ttl">⚡ Carga la <span>Batería</span></h1>
+    <div class="sub">Tablas de multiplicar: cada respuesta correcta carga la energía</div>
+    <h2 class="q">¿QUÉ TABLA QUIERES REPASAR?</h2>
+    <div id="tablePick" role="group" aria-label="Elige una tabla"></div>
+    <div class="menurow">
+      <button class="btn sec" id="btnSound" aria-pressed="true">🔊 SONIDO ON</button>
+      <button class="btn sec" id="btnCred">ℹ️ CRÉDITOS</button>
+      <button class="btn sec" id="btnWipe">🗑️ BORRAR PROGRESO</button>
+    </div>
+    <div class="credit">Diseño del juego: Claude + maestro Jose</div>
+  </section>
+
+  <!-- PARTIDA -->
+  <section id="game" class="screen wide" aria-label="Partida">
+    <header id="hud">
+      <button class="btn sec" id="btnExit" aria-label="Volver al menú">← Tablas</button>
+      <span class="pill" id="hTable">Tabla del 6</span>
+      <span class="pill" id="hQ">1 / 12</span>
+      <span class="pill" id="hScore" aria-label="Puntos">⭐ 0</span>
+      <span class="pill" id="hStreak" aria-label="Racha">🔥 0</span>
+      <span class="pill" id="hAcc" aria-label="Precisión">🎯 –</span>
+    </header>
+    <main id="arena">
+      <div id="cards" aria-label="Tarjetas de ayuda con las multiplicaciones de la tabla"></div>
+      <div id="center">
+        <div id="battery"><div id="bat" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" aria-label="Carga de la batería"></div><div id="batLbl">⚡ 0/12</div></div>
+        <div id="op" aria-live="polite"></div>
+        <form id="form" autocomplete="off" novalidate>
+          <div id="ansRow">
+            <input id="ans" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Escribe el resultado">
+            <button class="btn ye" id="btnCheck" type="submit">COMPROBAR</button>
+          </div>
+        </form>
+        <div id="fb" role="status" aria-live="polite"></div>
+      </div>
+    </main>
+  </section>
+
+  <!-- FINAL -->
+  <section id="end" class="screen" aria-live="polite">
+    <div class="box">
+      <h1 id="endTtl" style="font-size:clamp(1.6rem,5vw,2.4rem)"></h1>
+      <div id="bat2" class="chips" style="justify-content:center;font-weight:800"></div>
+      <div class="stats" id="endStats"></div>
+      <div class="list" id="endList"></div>
+      <div class="menurow">
+        <button class="btn" id="btnAgain">🔄 REPETIR TABLA</button>
+        <button class="btn sec" id="btnOther">🔢 ELEGIR OTRA TABLA</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CRÉDITOS -->
+  <section id="credits" class="screen">
+    <div class="box">
+      <h2>Créditos</h2>
+      <p><b>CEIP Miguel Servet · Balerma</b></p>
+      <p>Diseño del juego: <b>Claude + maestro Jose</b></p>
+      <p style="color:var(--mute);font-size:.95rem">Juego para practicar las tablas del 2 al 9. Funciona sin conexión. Guarda solo el dominio de cada multiplicación en este dispositivo; no guarda nombres ni datos personales.</p>
+      <button class="btn" id="btnCredBack">VOLVER</button>
+    </div>
+  </section>
+</div>
+<div id="toast" aria-hidden="true"></div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTxt"><div class="box"><p id="mTxt" style="font-size:1.15rem;font-weight:700"></p><div class="menurow"><button class="btn sec" id="mNo">CANCELAR</button><button class="btn" id="mYes">SÍ, BORRAR</button></div></div></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. CONFIGURACIÓN
+   ===================================================================== */
+const TABLES=[2,3,4,5,6,7,8,9];      // solo estas tablas
+const OTHERS=[2,3,4,5,6,7,8,9];      // los 8 hechos de cada tabla
+const QUESTIONS=12;                  // preguntas por partida
+const EXTRAS=QUESTIONS-OTHERS.length;// 4 preguntas adaptativas
+const GAP=2;                         // preguntas distintas antes de repetir una fallada
+const STORE_KEY="tablas_miguelservet_v1";
+const COLORS=["#27e1ff","#ffd93d","#ff6bd5","#2bff88","#ff9a3d","#b58cff","#ff6b7d","#6bb8ff"];
+const REDUCED=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* =====================================================================
+   2. DATOS / ESTADO
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+const rnd=()=>Math.random();
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const keyOf=(t,o)=>t+"x"+o;                 // clave de cada hecho: "6x7"
+let S=null;                                  // partida en curso
+let busy=false;                              // evita dobles pulsaciones
+
+/* =====================================================================
+   3. ALMACENAMIENTO (localStorage con respaldo en memoria)
+   ===================================================================== */
+let mem={facts:{},sound:true};
+function loadMem(){
+  try{const r=JSON.parse(localStorage.getItem(STORE_KEY)||"null");
+    if(r&&typeof r==="object"){mem.facts=(r.facts&&typeof r.facts==="object")?r.facts:{};mem.sound=r.sound!==false}}
+  catch(e){}
+}
+function saveMem(){try{localStorage.setItem(STORE_KEY,JSON.stringify(mem))}catch(e){}}
+function stat(key){
+  let s=mem.facts[key];
+  if(!s||typeof s!=="object"){s=mem.facts[key]={shown:0,ok:0,err:0,times:[],avg:0,diff:0,last:0}}
+  if(!Array.isArray(s.times))s.times=[];
+  return s;
+}
+function wipeMem(){mem.facts={};saveMem()}
+
+/* =====================================================================
+   4. SISTEMA ADAPTATIVO
+   dificultad nueva = 0,7·anterior + incremento (el pasado va perdiendo peso)
+     incorrecta +5 · >6 s +3 · 4–6 s +2 · 2,5–4 s +1 · <2,5 s −1,5
+   Más errores y más tiempo => más dificultad => más probabilidad de repetir.
+   ===================================================================== */
+function deltaFor(correct,t){
+  if(!correct)return 5;
+  if(t>6)return 3;
+  if(t>4)return 2;
+  if(t>2.5)return 1;
+  return -1.5;
+}
+function applyAnswer(key,correct,t){
+  const s=stat(key);
+  s.shown++;if(correct)s.ok++;else s.err++;
+  s.times.push(+t.toFixed(2));if(s.times.length>10)s.times.shift();
+  s.avg=+(s.times.reduce((a,b)=>a+b,0)/s.times.length).toFixed(2);
+  s.diff=+Math.max(0,Math.min(15,s.diff*0.7+deltaFor(correct,t))).toFixed(2);
+  s.last=Date.now();
+  saveMem();
+}
+function levelOf(diff){            // etiqueta pedagógica
+  if(diff<2)return"alto";
+  if(diff<4)return"adecuado";
+  if(diff<7)return"duda";
+  return"dificultad";
+}
+function weightOf(key,isNew){      // peso para elegir la siguiente pregunta
+  const d=stat(key).diff;
+  return (isNew?1:0.3)+0.15*d*d;
+}
+
+/* =====================================================================
+   5. GENERACIÓN DE TARJETAS DE AYUDA (posiciones fijas durante la partida)
+   ===================================================================== */
+function buildDeck(table){
+  return OTHERS.map((o,i)=>{
+    const swap=rnd()<0.5;                         // propiedad conmutativa aleatoria
+    return{key:keyOf(table,o),other:o,a:swap?o:table,b:swap?table:o,r:table*o,color:COLORS[i%COLORS.length],
+           jx:rnd()*2-1,jy:rnd()*2-1,rot:(rnd()*6-3),score:null};
+  });
+}
+function gridFor(mode,w,h){
+  // devuelve las celdas disponibles; en modo ancho se deja libre el centro
+  const cols=mode==="wide"?7:3,rows=mode==="wide"?5:4,cells=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(mode==="wide"&&c>=2&&c<=4&&(h<460||(r>=1&&r<=3)))continue;   // pantallas bajas: columna central completa libre
+    cells.push({c,r});
+  }
+  return{cols,rows,cells};
+}
+function layoutCards(){
+  if(!S)return;
+  const box=$("cards"),w=box.clientWidth,h=box.clientHeight-12;
+  if(w<20||h<20)return;
+  const g=gridFor(S.mode,w,h),cw=w/g.cols,ch=h/g.rows;
+  const cardW=Math.min(170,cw*0.9),cardH=Math.min(70,ch*0.8);
+  // celdas elegidas según un orden aleatorio guardado en la partida (no cambia mientras se juega)
+  const order=g.cells.map((cell,idx)=>({cell,k:S.perm[idx%S.perm.length]+idx*1e-4})).sort((x,y)=>x.k-y.k).slice(0,S.deck.length);
+  const fs=Math.max(14,Math.min(30,cardW*0.17));
+  S.deck.forEach((f,i)=>{
+    const el=f.el,cell=order[i].cell;
+    const mx=(cw-cardW)/2,my=(ch-cardH)/2;
+    const x=cell.c*cw+cw/2+f.jx*mx*0.7-cardW/2,y=6+cell.r*ch+ch/2+f.jy*my*0.7-cardH/2;
+    el.style.width=cardW+"px";el.style.height=cardH+"px";el.style.left=x+"px";el.style.top=y+"px";
+    el.style.setProperty("--cf",fs+"px");el.style.transform=REDUCED?"none":"rotate("+f.rot+"deg)";
+  });
+}
+function mountCards(){
+  const box=$("cards");box.innerHTML="";
+  S.deck.forEach(f=>{
+    const el=document.createElement("div");el.className="card";el.style.setProperty("--c",f.color);
+    el.setAttribute("aria-label",f.a+" por "+f.b+" igual a "+f.r);
+    el.innerHTML=f.a+" × "+f.b+" = <b>"+f.r+"</b>";
+    box.appendChild(el);f.el=el;
+  });
+  layoutCards();
+}
+function chooseMode(){
+  // el teclado virtual solo cambia la altura: el modo cambia únicamente si cambia la anchura
+  const w=window.innerWidth,h=window.innerHeight;
+  if(S&&S.lastW===w)return S.mode;
+  return(w>=h*1.1&&w>=560)?"wide":"tall";
+}
+function applyMode(){
+  if(!S)return;
+  S.mode=chooseMode();S.lastW=window.innerWidth;
+  $("game").className="screen active "+S.mode;
+  layoutCards();
+}
+
+/* =====================================================================
+   6. SELECCIÓN DE PREGUNTAS (adaptativa, se recalcula tras cada respuesta)
+   ===================================================================== */
+function pickNext(s){
+  const i=s.qIndex,left=QUESTIONS-i;
+  const unasked=s.facts.filter(f=>!s.asked.has(f.key));
+  const mustNew=unasked.length>=left||s.extrasUsed>=EXTRAS;   // garantiza que salgan las 8
+  let pool=mustNew&&unasked.length?unasked:s.facts.slice();
+  let el=pool.filter(f=>f.key!==s.lastKey&&(s.block[f.key]||0)<=i);   // no repetir fallada hasta 2 preguntas después
+  if(!el.length)el=pool.filter(f=>f.key!==s.lastKey);
+  if(!el.length)el=pool;
+  const w=el.map(f=>weightOf(f.key,!s.asked.has(f.key)));
+  let r=rnd()*w.reduce((a,b)=>a+b,0),pick=el[el.length-1];
+  for(let k=0;k<el.length;k++){r-=w[k];if(r<=0){pick=el[k];break}}
+  if(s.asked.has(pick.key))s.extrasUsed++;
+  return pick;
+}
+
+/* =====================================================================
+   7. INTERFAZ
+   ===================================================================== */
+function show(id){
+  document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));
+  if(id==="game"){$("game").classList.add("active")}else $(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+function renderMenu(){
+  const box=$("tablePick");box.innerHTML="";
+  TABLES.forEach(t=>{
+    let sum=0,seen=0;
+    OTHERS.forEach(o=>{const s=mem.facts[keyOf(t,o)];if(s&&s.shown>0){seen++;sum+=1-Math.min(s.diff,8)/8}});
+    const pct=seen?Math.round(sum/OTHERS.length*100):0;
+    const b=document.createElement("button");b.className="tbtn";b.type="button";
+    b.setAttribute("aria-label","Tabla del "+t+(seen?", dominio "+pct+" por ciento":", nueva"));
+    b.innerHTML=t+'<small>'+(seen?pct+" %":"nueva")+'</small><span class="mbar"><i style="width:'+pct+'%"></i></span>';
+    b.addEventListener("click",()=>startGame(t));box.appendChild(b);
+  });
+  setSoundBtn();
+}
+function updateHud(){
+  $("hTable").textContent="Tabla del "+S.table;
+  $("hQ").textContent=Math.min(S.qIndex+1,QUESTIONS)+" / "+QUESTIONS;
+  $("hScore").textContent="⭐ "+S.score;
+  $("hStreak").textContent="🔥 "+S.streak;
+  $("hAcc").textContent="🎯 "+(S.answered?Math.round(S.ok1/S.answered*100)+"%":"–");
+  const segs=$("bat").children;
+  for(let k=0;k<segs.length;k++)segs[k].classList.toggle("on",k<S.done);
+  $("bat").setAttribute("aria-valuenow",S.done);$("batLbl").textContent="⚡ "+S.done+"/"+QUESTIONS;
+}
+function toast(txt,col){const t=$("toast");t.textContent=txt;t.style.color=col||"#fff";t.classList.remove("on");void t.offsetWidth;t.classList.add("on")}
+function setFb(txt,cls){const f=$("fb");f.textContent=txt;f.className=cls||""}
+
+function startGame(table){
+  if(!TABLES.includes(table))return;
+  const facts=OTHERS.map(o=>({key:keyOf(table,o),other:o,r:table*o}));
+  S={table,facts,deck:buildDeck(table),perm:shuffle(Array.from({length:40},(_,i)=>i)),qIndex:0,asked:new Set(),extrasUsed:0,
+     block:{},lastKey:null,score:0,streak:0,best:0,ok1:0,errq:0,answered:0,done:0,times:[],log:[],q:null,mode:"wide",lastW:-1};
+  const bat=$("bat");bat.innerHTML="";for(let k=0;k<QUESTIONS;k++)bat.appendChild(document.createElement("i"));
+  show("game");
+  S.mode=(window.innerWidth>=window.innerHeight*1.1&&window.innerWidth>=560)?"wide":"tall";S.lastW=window.innerWidth;
+  $("game").className="screen active "+S.mode;
+  mountCards();
+  // el reparto se calcula una vez ya visible la pantalla
+  requestAnimationFrame(()=>{layoutCards();nextQuestion()});
+}
+function nextQuestion(){
+  busy=false;
+  if(S.qIndex>=QUESTIONS){return endGame()}
+  const f=pickNext(S);S.lastKey=f.key;S.asked.add(f.key);
+  const swap=rnd()<0.5,a=swap?f.other:S.table,b=swap?S.table:f.other;   // 6×7 o 7×6
+  S.q={fact:f,a,b,t0:performance.now(),attempts:0,errs:0};
+  $("op").innerHTML=a+" × "+b+" = <em>?</em>";
+  $("op").setAttribute("aria-label",a+" por "+b);
+  S.deck.forEach(d=>d.el.classList.remove("glow"));
+  const inp=$("ans");inp.value="";inp.disabled=false;$("btnCheck").disabled=false;
+  setFb("");updateHud();
+  inp.focus({preventScroll:true});
+  S.q.t0=performance.now();                       // el tiempo empieza cuando aparece la operación
+}
+
+/* =====================================================================
+   8. EVALUACIÓN DE RESPUESTAS
+   ===================================================================== */
+function onSubmit(ev){
+  if(ev)ev.preventDefault();
+  if(!S||!S.q||busy)return;
+  const inp=$("ans"),raw=inp.value.replace(/\D/g,"");
+  if(raw===""){setFb("✍️ Escribe un número para continuar.","tip");shake();inp.focus();return}
+  const t=(performance.now()-S.q.t0)/1000,val=parseInt(raw,10),q=S.q,f=q.fact;
+  q.attempts++;
+  if(val===f.r){
+    busy=true;inp.disabled=true;$("btnCheck").disabled=true;
+    if(q.attempts===1){
+      S.ok1++;S.answered++;S.streak++;S.best=Math.max(S.best,S.streak);S.times.push(t);
+      const bonus=t<2.5?30:(t<4?20:(t<6?10:0));                 // la velocidad influye poco
+      S.score+=100+bonus+Math.min(S.streak,5)*10;
+      applyAnswer(f.key,true,t);
+      setFb("✅ ¡Correcto!","ok");toast("⚡ +"+(100+bonus),"#ffd93d");
+    }else{
+      S.score+=20;setFb("✅ ¡Correcto! Ahora ya la tienes.","ok");
+    }
+    S.log.push({key:f.key,other:f.other,first:q.attempts===1,errs:q.errs});
+    S.done++;S.qIndex++;beep("ok");updateHud();
+    setTimeout(()=>{if(S)nextQuestion()},REDUCED?700:900);
+  }else{
+    q.errs++;
+    if(q.attempts===1){                                        // el fallo se registra una sola vez
+      S.answered++;S.errq++;S.streak=0;S.times.push(t);
+      applyAnswer(f.key,false,t);S.block[f.key]=S.qIndex+GAP+1;
+    }
+    beep("ko");shake();
+    if(q.errs===1)setFb("❌ Todavía no. Busca la respuesta entre las tarjetas.","ko");
+    else if(q.errs===2)setFb("💡 También puedes buscar "+q.b+" × "+q.a+".","tip");
+    else{setFb("👀 Mira la tarjeta que brilla y escribe el resultado.","tip");
+      const d=S.deck.find(x=>x.key===f.key);if(d){d.el.classList.add("glow");clearTimeout(S.glowT);S.glowT=setTimeout(()=>d.el.classList.remove("glow"),6000)}}
+    updateHud();inp.value="";inp.focus();
+  }
+}
+function shake(){const i=$("ans");i.classList.remove("shake");void i.offsetWidth;i.classList.add("shake")}
+
+/* =====================================================================
+   9. ESTADÍSTICAS Y 10. FINAL DE PARTIDA
+   ===================================================================== */
+function endGame(){
+  beep("end");
+  const n=QUESTIONS,acc=Math.round(S.ok1/n*100),avg=S.times.length?(S.times.reduce((a,b)=>a+b,0)/S.times.length):0;
+  $("endTtl").textContent="⚡ TABLA DEL "+S.table+" COMPLETADA";
+  $("bat2").innerHTML="🔋 Batería al 100 %";
+  $("endStats").innerHTML=
+    "<div><b>"+S.ok1+"</b><span>aciertos a la primera</span></div><div><b>"+S.errq+"</b><span>preguntas con error</span></div><div><b>"+acc+"%</b><span>precisión</span></div>"+
+    "<div><b>"+S.best+"</b><span>mejor racha</span></div><div><b>"+avg.toFixed(1)+" s</b><span>tiempo medio</span></div><div><b>"+S.score+"</b><span>puntuación</span></div>";
+  const good=[],mid=[],bad=[];
+  S.facts.forEach(f=>{
+    const st=stat(f.key),e=S.log.find(l=>l.key===f.key&&!l.first)?1:0;
+    const label=S.table+" × "+f.other,lvl=levelOf(st.diff);
+    if(st.shown>0&&!e&&(lvl==="alto"||lvl==="adecuado")&&st.diff<3)good.push(label);
+    else if(e||lvl==="dificultad"||lvl==="duda")bad.push(label);
+    else mid.push(label);
+  });
+  const ch=(a,c)=>a.map(x=>'<span class="chip '+c+'">'+x+'</span>').join("");
+  let h="";
+  if(good.length)h+='<div class="list"><h3>🌟 Lo haces muy bien</h3><div class="chips">'+ch(good,"g")+'</div></div>';
+  if(mid.length)h+='<div class="list"><h3>👍 Vas por buen camino</h3><div class="chips">'+ch(mid,"b")+'</div></div>';
+  if(bad.length)h+='<div class="list"><h3>🔄 Necesitas practicar más</h3><div class="chips">'+ch(bad,"r")+'</div><p style="color:var(--mute);font-size:.9rem;margin:.4em 0 0">Tranquilo: la próxima partida saldrán más veces para ayudarte a dominarlas.</p></div>';
+  $("endList").innerHTML=h;
+  $("btnAgain").textContent="🔄 REPETIR TABLA DEL "+S.table;
+  show("end");
+}
+
+/* =====================================================================
+   11. AUDIO (Web Audio API, opcional)
+   ===================================================================== */
+let AC=null;
+function tone(f,d,type,v,f2,delay){
+  if(!mem.sound)return;
+  try{
+    AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();
+    const t0=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"triangle";o.frequency.setValueAtTime(f,t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+d);
+    g.gain.setValueAtTime(v||.06,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);
+    o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+d+.02);
+  }catch(e){}
+}
+function beep(kind){
+  if(kind==="ok"){tone(660,.1,"triangle",.07);tone(990,.18,"triangle",.07,0,.09)}
+  else if(kind==="ko"){tone(220,.28,"sawtooth",.05,110)}
+  else if(kind==="end"){[523,659,784,1047].forEach((f,i)=>tone(f,.25,"triangle",.07,0,i*.13))}
+}
+function setSoundBtn(){const b=$("btnSound");b.textContent=mem.sound?"🔊 SONIDO ON":"🔇 SONIDO OFF";b.setAttribute("aria-pressed",String(mem.sound))}
+
+/* =====================================================================
+   12. INICIALIZACIÓN
+   ===================================================================== */
+function confirmBox(msg,yes){
+  $("mTxt").textContent=msg;$("modal").classList.add("on");$("mNo").focus();
+  $("mYes").onclick=()=>{$("modal").classList.remove("on");yes()};
+  $("mNo").onclick=()=>$("modal").classList.remove("on");
+}
+function init(){
+  loadMem();renderMenu();
+  $("form").addEventListener("submit",onSubmit);
+  $("ans").addEventListener("input",e=>{const c=e.target.value.replace(/\D/g,"").slice(0,3);if(c!==e.target.value)e.target.value=c});
+  $("btnSound").addEventListener("click",()=>{mem.sound=!mem.sound;saveMem();setSoundBtn();if(mem.sound)beep("ok")});
+  $("btnCred").addEventListener("click",()=>show("credits"));
+  $("btnCredBack").addEventListener("click",()=>show("menu"));
+  $("btnWipe").addEventListener("click",()=>confirmBox("¿Seguro que quieres borrar todo el progreso de este dispositivo?",()=>{wipeMem();renderMenu()}));
+  $("btnExit").addEventListener("click",()=>{S=null;busy=false;renderMenu();show("menu")});
+  $("btnAgain").addEventListener("click",()=>startGame(S.table));
+  $("btnOther").addEventListener("click",()=>{renderMenu();show("menu")});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modal").classList.remove("on")});
+  let rt=null;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(S&&$("game").classList.contains("active"))applyMode()},120)});
+  window.addEventListener("orientationchange",()=>setTimeout(()=>{if(S&&$("game").classList.contains("active")){S.lastW=-1;applyMode()}},250));
+}
+init();
+</script>
+</body>
+</html>
